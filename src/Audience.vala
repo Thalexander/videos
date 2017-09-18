@@ -22,6 +22,11 @@
 namespace Audience {
 
     public Audience.Settings settings; //global space for easier access...
+    
+    namespace Option {
+        private static bool PRINT_VERSION = false;
+    }
+    
     public class App : Granite.Application {
 
         /**
@@ -54,6 +59,11 @@ namespace Audience {
             app_launcher = "org.pantheon.audience.desktop";
             application_id = "io.elementary.videos";
         }
+        
+        public const OptionEntry[] app_options = {
+            { "version", 'v', 0, OptionArg.NONE, out Option.PRINT_VERSION, "Print version info and exit", null },
+            { null }
+        };
 
         public App () {
             Gtk.Settings.get_default ().gtk_application_prefer_dark_theme = true;
@@ -107,7 +117,23 @@ namespace Audience {
 
 public static void main (string [] args) {
     X.init_threads ();
+    
+    var context = new OptionContext (_("Videos"));
+        context.add_main_entries (Audience.App.app_options, "videos");
+        context.add_group (Gtk.get_option_group (true));
 
+    try {
+        context.parse (ref args);
+    } catch (Error e) {
+        warning (e.message);
+    }
+    
+    if (Audience.Option.PRINT_VERSION) {
+        stdout.printf("Videos %s\n", Constants.VERSION);
+        stdout.printf("Copyright 2013-2017 Videos Developers.\n");
+        return;
+    }
+        
     var err = GtkClutter.init (ref args);
     if (err != Clutter.InitError.SUCCESS) {
         error ("Could not initalize clutter! "+err.to_string ());
